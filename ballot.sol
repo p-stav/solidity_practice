@@ -18,7 +18,8 @@ contract Ballot {
   // @dev declare proposal, which is a vote option
   struct Proposal {
     uint32 voterCount;  // number of people voted
-    bytes32 proposal_description;     // bytes32 since it's easier to work with bytes32
+    // bytes32 proposal_description;     // scoping this out as solidity doesn't make it easy to pass variables of unkown size
+                                         // we only need the associated enum anyway
   }
 
   // @dev declare Voter
@@ -41,15 +42,18 @@ contract Ballot {
   // @dev constructor - set chairperson, define @dev chairperson grants permission to vote
   // @dev input - an array of proposal names
   // output -- an array of Proposals
-  constructor(bytes32[] memory proposalNames) public {
+  constructor(uint8 number_proposals) public {
     chairperson = msg.sender;
 
-    for(uint8 i=0; i<proposalNames.length; i++) {
-      proposals.push(Proposal({voterCount:uint32(0), proposal_description:proposalNames[i]}));
+    for(uint8 i=0; i<number_proposals; i++) {
+      proposals.push(Proposal({voterCount:uint32(0)}));
     }
 
     // note - by design, chairperson cannot vote. To change this, uncomment below
     // voters[msg.sender] = Voter({msg.sender, false});
+
+    // make voting active
+    isActive = true;
   }
 
   // @dev chairperson grants an address to vote
@@ -63,8 +67,10 @@ contract Ballot {
 
   // @dev voter submits vote, added to voters map
   function submitVote(address voter, uint8 proposal) public {
-    // check if already voted
+
+    // check if already voted and that proposal is less than length
     checkVoted(voter);
+    require(proposal < proposals.length);
 
     // add count to proposal in proposal array
     proposals[proposal].voterCount++;
@@ -87,6 +93,20 @@ contract Ballot {
   function closeVoting() public onlyOwner {
     isActive = false;
   }
+
+  function winningProposal() public view returns (uint8 _winningProposal) {
+
+        // require that isActive is false
+        require(isActive == false);
+
+        uint winningVoteCount = 0;
+        for (uint8 prop = 0; prop < proposals.length; prop++)
+            if (proposals[prop].voterCount > winningVoteCount) {
+                winningVoteCount = proposals[prop].voterCount;
+                _winningProposal = prop;
+            }
+  }
+
 
   // @dev internal function to check if address already voted
   function checkVoted(address address_voter) private {
