@@ -16,27 +16,25 @@ contract Crowdfund {
   // @dev define global variables to contract
   // @dev define crowdfund
 
-  struct CrowdFund {
+  struct Crowdfund {
     bool isActive;
     bool goalMet;
     uint fundGoal;
     uint startDate;
     uint endDate;
     mapping (address => uint) contributor_funds;
-    address chairperson;
     uint totalFunds;
   }
 
-  string[] contributors;
+  address payable[]  contributors;
 
   // @dev public scope
   Crowdfund crowdfund;
 
   // @dev constructor
-  constructor(uint num_days_finish, uint fundraise_goal) public {
+  constructor(uint numDaysFinish, uint fundraise_goal) public {
 
     // @dev set variables, and make active
-    crowdfund.chairperson = msg.sender;
     crowdfund.fundGoal = fundraise_goal;
     crowdfund.startDate = now;
     crowdfund.endDate = crowdfund.startDate + numDaysFinish;
@@ -50,11 +48,11 @@ contract Crowdfund {
     accept_funds(msg.sender, msg.value);
   }
 
-  function () public payable is_active is_valid_amount crowdfund_end {
+  function () external payable is_active is_valid_amount crowdfund_end {
     accept_funds(msg.sender, msg.value);
   }
 
-  function accept_funds(uint contributor_address, uint contribution) private {
+  function accept_funds(address payable contributor_address, uint contribution) private {
     // check if before endDate
     require(now <= crowdfund.endDate);
 
@@ -66,7 +64,7 @@ contract Crowdfund {
     crowdfund.totalFunds += contribution;
 
     // check if we have reached goal
-    if(crowdfund.totalFunds >= fundGoal) {
+    if(crowdfund.totalFunds >= crowdfund.fundGoal) {
       bool goalMet = true;
     }
   }
@@ -74,26 +72,32 @@ contract Crowdfund {
 
 
   // @dev end crowdfund
-  modifier crowdfund_end() private pure {
-    if(crowdfund == true && now > crowdfund.endDate) {
+  modifier crowdfund_end() {
+    if(crowdfund.isActive == true && now > crowdfund.endDate) {
       crowdfund.isActive = false;
 
       // perform check to see if we must refund folks
       if(crowdfund.totalFunds < crowdfund.fundGoal) {
-        refund_funds();
+        refunds();
       }
     }
     _;
   }
 
   // @dev refund if raise not successful
-  function refunds() private {
-    for(uint i = 0; i<crowdfund.contributors.length) {
-      uint contribution = contributor_funds[contributors[i]];
-      require(contribution <= totalFunds);
+  // @dev this function needs to be public because it is payable
+  //      so we need to make a series of requirements again to be certain
+  //      that it is not triggered incorrectly. It's duplicative
+  function refunds() public payable {
+    require(crowdfund.isActive == false);
+    require(now > crowdfund.endDate);
+
+    for(uint i = 0; i<contributors.length;i++) {
+      uint contribution = crowdfund.contributor_funds[contributors[i]];
+      require(contribution <= crowdfund.totalFunds);
 
       contributors[i].transfer(contribution);
-      totalFunds -= contribution;
+      crowdfund.totalFunds -= contribution;
     }
   }
 
