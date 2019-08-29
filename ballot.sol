@@ -7,8 +7,7 @@ pragma solidity >=0.4.22 <0.6.0;
 //        highly reduced value if it does not provide attestation of an untampered vote
 //
 // @dev - This is designed for people to fork and use with their own front end that passes in the defined.
-// @dev - This version does not have delegation possible. However, it assumes that a set of addresses can
-//        give permission for a set of addresses to vote
+// @dev - This version does not have delegation possible.
 
 
 contract Ballot {
@@ -75,7 +74,6 @@ contract Ballot {
     // add count to proposal in proposal array
     proposals[proposal].voterCount++;
 
-    // TODO: RECORD VOTE ON-CHAIN TO ATTEST TO ITS OCCURRENCE
 
     // change voter to voted!
     voters[voter].voted = true;
@@ -120,4 +118,9 @@ contract Ballot {
         _;
     }
 
+    /* limitations
+       Throughput: With a large voterbase, this contract will be exteremely slow
+       Future versions should create a 'master' voter contract that spawns children voter contracts, one for a maneagable
+       number of people (maybe broken up geographically, maybe broken up by company department, etc)
+     */
 }

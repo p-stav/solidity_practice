@@ -5,9 +5,11 @@ pragma solidity >=0.4.22 <0.6.0;
 // @dev - put a simple bonding curve together.
 //        burning and minting will be done through using a 'vault' contract
 //        For simplicity, the bonding curve will be linear
-// @dev - My  belief is that a voting application on blockchain has
-//        highly reduced value if it does not provide attestation of an untampered vote
 //
+// NOTE: I know that there are constraints with fixed point math in solidity. I've abstracted
+//       this away at this moment to get in for a feel of solidity. But I would test and incorporate
+//       libraries like Zeppelin's safemath or cementdao's fixedity contract.
+
 // @dev - This is designed for people to fork and use with their own frontend that passes in constructor's parameter.
 
 
@@ -28,11 +30,11 @@ contract bondingCurve {
 
     // create a series of events to update other enttieis in dapp
     event tokensBought(uint numTokens, uint quantityAdded, address purchaser);
+    event tokensSold(uint numTokens, uint quantityRemoved, address purchaser);
 
 
     /*
     // @dev constructor to define bonding curve, owner, and other parameters
-    // @dev This is the constructor. Solidity does not implement float number so we have to
     //  multiply constants by 1000 and rounding them before creating the smart contract.
     */
     constructor(uint32 _bondingSlope, uint32 _yIntercept) public {
@@ -115,18 +117,4 @@ contract bondingCurve {
         }
 
     }
-
-     /*
-    // @dev buy tokens - triggered on fallback function
-    // TODO: To use this, we need to solve polynomial functions externally or in Solidity
-    //       For now, we'll say that userBuysTokens needs to be called
-
-    function () payable external{
-        // given amount sent, define amount of tokens to send and increase price
-        // define AntiDerivative -- and solve for q2 effectivly
-        // antidreivative = (0.5*bondingSlope) *x^2 + yIntercept * x
-        // solve for x is:
-        // uint quantity2 = (_amount + bondingSlope*0.5*numTokens + yIntercept*numTokens) / (0.5*bondingSlope*quantity2 + yIntercept);
-    }
-    */
 }
